@@ -88,6 +88,8 @@ def main(N=100, t=0, tEnd=10.0, dt=0.01, softening=0.1, G=1.0, plotRealTime=Fals
         f"{os.path.dirname(os.path.abspath(__file__))}/nbody_original_{N}_{tEnd}_{dt}_{softening}_{G}.png"
     )
 
+    if pos is not None and vel is not None:
+        return pos, vel
 
 if __name__ == "__main__":
     main()

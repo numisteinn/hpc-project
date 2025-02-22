@@ -3,7 +3,8 @@ import numpy as np
 
 # Import the main function from the module containing your simulation.
 # Replace 'nbody_simulation' with the actual module name.
-from nbody_original.nbody_original import main
+from nbody_original.nbody_original import main as original_main
+from nbody_cython.nbody_cython import main as cython_main
 
 class TestNBodySimulation(unittest.TestCase):
 
@@ -46,14 +47,14 @@ class TestNBodySimulation(unittest.TestCase):
 
     def test_original_implementation(self):
         N, pos, vel, expected_pos, expected_vel = self.get_hparams()
-        final_pos, final_vel = main(N=N, t=0, tEnd=10.0, dt=0.01, softening=0.1, G=1.0, plotRealTime=False, measureTime=False, pos=pos, vel=vel)
-        
+        final_pos, final_vel = original_main(N=N, t=0, tEnd=10.0, dt=0.01, softening=0.1, G=1.0, plotRealTime=False, measureTime=False, pos=pos, vel=vel)
+
         np.testing.assert_array_almost_equal(final_pos, expected_pos, decimal=7)
         np.testing.assert_array_almost_equal(final_vel, expected_vel, decimal=7)
 
     def test_cython_implementation(self):
         N, pos, vel, expected_pos, expected_vel = self.get_hparams()
-        final_pos, final_vel = main(N=N, t=0, tEnd=10.0, dt=0.01, softening=0.1, G=1.0, plotRealTime=False, measureTime=False, pos=pos, vel=vel)
+        final_pos, final_vel = cython_main(N=N, t=0, tEnd=10.0, dt=0.01, softening=0.1, G=1.0, plotRealTime=False, measureTime=False, pos=pos, vel=vel)
         
         np.testing.assert_array_almost_equal(final_pos, expected_pos, decimal=7)
         np.testing.assert_array_almost_equal(final_vel, expected_vel, decimal=7)
