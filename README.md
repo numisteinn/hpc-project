@@ -16,3 +16,9 @@ python nbody.py
 ```
 
 ![Simulation](./nbody.png)
+
+
+# Optimization methods that are applicable
+- numba jit for the for loop
+- cuda
+- cython

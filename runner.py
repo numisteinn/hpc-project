@@ -25,6 +25,7 @@ def main():
         help="Enable plotting as the simulation goes along",
         default=False,
     )
+    parser.add_argument("-measureTime", type=bool, help="Measure time", default=False)
     args = parser.parse_args()
 
     match args.mode:
