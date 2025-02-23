@@ -2,30 +2,26 @@ qt.qpa.theme.dbus: Session DBus not running.
 qt.qpa.theme.dbus: Application will not react to setting changes.
  Check your DBus installation.
 
- Performance counter stats for './.venv/bin/python runner.py -N 1000':
+ Performance counter stats for 'system wide':
 
-   894,101,677,321      cpu_core/cycles/                 #    1.176 G/sec                    (80.05%)
- 1,512,534,821,212      cpu_atom/cycles/                 #    1.990 G/sec                    (72.63%)
-   743,137,013,838      cpu_core/instructions/           #  977.580 M/sec                    (80.05%)
-   730,669,437,464      cpu_atom/instructions/           #  961.179 M/sec                    (72.63%)
-    11,116,904,754      cpu_core/cache-references/       #   14.624 M/sec                    (80.05%)
-       426,637,355      cpu_atom/cache-references/       #  561.232 K/sec                    (72.63%)
-     5,837,499,059      cpu_core/cache-misses/           #    7.679 M/sec                    (80.05%)
-        44,459,872      cpu_atom/cache-misses/           #   58.486 K/sec                    (72.63%)
-    98,555,363,398      cpu_core/branches/               #  129.647 M/sec                    (80.05%)
-    97,480,265,014      cpu_atom/branches/               #  128.233 M/sec                    (72.63%)
-        59,615,921      cpu_core/branch-misses/          #   78.423 K/sec                    (80.05%)
-        10,460,291      cpu_atom/branch-misses/          #   13.760 K/sec                    (72.63%)
-        760,180.15 msec task-clock                       #   11.792 CPUs utilized          
-         2,916,998      faults                           #    3.837 K/sec                  
-         2,916,991      minor-faults                     #    3.837 K/sec                  
-                 7      major-faults                     #    0.009 /sec                   
-            50,477      cs                               #   66.401 /sec                   
-                52      migrations                       #    0.068 /sec                   
+   716,917,368,460      cpu_core/cycles/                 #  950.910 M/sec                  
+ 1,092,936,408,081      cpu_atom/cycles/                 #    1.450 G/sec                  
+   595,502,483,057      cpu_core/instructions/           #  789.867 M/sec                  
+   531,685,586,773      cpu_atom/instructions/           #  705.221 M/sec                  
+     8,983,650,774      cpu_core/cache-references/       #   11.916 M/sec                  
+       665,883,505      cpu_atom/cache-references/       #  883.219 K/sec                  
+     4,660,720,462      cpu_core/cache-misses/           #    6.182 M/sec                  
+       284,488,184      cpu_atom/cache-misses/           #  377.342 K/sec                  
+    79,253,777,553      cpu_core/branches/               #  105.121 M/sec                  
+    71,590,630,391      cpu_atom/branches/               #   94.957 M/sec                  
+        64,107,665      cpu_core/branch-misses/          #   85.032 K/sec                  
+        55,523,426      cpu_atom/branch-misses/          #   73.646 K/sec                  
+        753,927.61 msec task-clock                       #   12.000 CPUs utilized          
+         2,518,515      faults                           #    3.341 K/sec                  
+         2,518,472      minor-faults                     #    3.340 K/sec                  
+                11      major-faults                     #    0.015 /sec                   
+           153,970      cs                               #  204.224 /sec                   
+             2,739      migrations                       #    3.633 /sec                   
 
-      64.465407131 seconds time elapsed
-
-     751.785999000 seconds user
-       8.440777000 seconds sys
-
+      62.828617111 seconds time elapsed
 
