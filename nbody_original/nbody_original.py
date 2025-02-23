@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import time
 
 from plot import prep_figure, plot_state, plot_finalize
 
@@ -80,15 +81,17 @@ def getEnergy(pos, vel, mass, G):
     return KE, PE
 
 
-def main(N=100, t=0, tEnd=10.0, dt=0.01, softening=0.1, G=1.0, plotRealTime=False):
+def main(N=100, t=0, tEnd=10.0, dt=0.01, softening=0.1, G=1.0, plotRealTime=False,measureTime=False, pos=None, vel=None):
     """N-body simulation"""
 
     # Generate Initial Conditions
     np.random.seed(17)  # set the random number generator seed
 
     mass = 20.0 * np.ones((N, 1)) / N  # total mass of particles is 20
-    pos = np.random.randn(N, 3)  # randomly selected positions and velocities
-    vel = np.random.randn(N, 3)
+    if pos is None:
+        pos = np.random.randn(N, 3)  # randomly selected positions and velocities
+    if vel is None:
+        vel = np.random.randn(N, 3)
 
     # Convert to Center-of-Mass frame
     vel -= np.mean(mass * vel, 0) / np.mean(mass)
@@ -113,6 +116,7 @@ def main(N=100, t=0, tEnd=10.0, dt=0.01, softening=0.1, G=1.0, plotRealTime=Fals
 
     prep_figure()
 
+    start_time = time.time()
     # Simulation Main Loop
     for i in range(1, Nt + 1):
         # (1/2) kick
@@ -142,10 +146,17 @@ def main(N=100, t=0, tEnd=10.0, dt=0.01, softening=0.1, G=1.0, plotRealTime=Fals
         if plotRealTime:
             plot_state(i, t_all, pos_save, KE_save, PE_save)
 
+    end_time = time.time()
+    if measureTime:
+        print(f"Execution time: {end_time - start_time} seconds")
+
     plot_state(i, t_all, pos_save, KE_save, PE_save)
     plot_finalize(
         f"{os.path.dirname(os.path.abspath(__file__))}/nbody_original_{N}_{tEnd}_{dt}_{softening}_{G}.png"
     )
+
+    if pos is not None and vel is not None:
+        return pos, vel
 
 
 if __name__ == "__main__":
