@@ -11,6 +11,7 @@ dependencies = [
     "memory-profiler>=0.61.0",
     "numpy>=2.2.2",
     "psutil>=6.1.1",
+    "pylint>=3.3.4",
     "pyqt6>=6.8.1",
     "ruff>=0.9.5",
     "setuptools>=75.8.0",
