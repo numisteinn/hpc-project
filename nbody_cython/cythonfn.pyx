@@ -37,10 +37,10 @@ def get_acc(
 
     return a
 
-def getEnergy(np.ndarray[np.float64_t, ndim=2] pos,
-              np.ndarray[np.float64_t, ndim=2] vel, 
-              np.ndarray[np.float64_t, ndim=2] mass, 
-              double G):
+def get_energy(np.ndarray[np.float64_t, ndim=2] pos,
+               np.ndarray[np.float64_t, ndim=2] vel,
+               np.ndarray[np.float64_t, ndim=2] mass,
+               double G):
     """
     Get kinetic energy (KE) and potential energy (PE) of simulation
     pos is N x 3 matrix of positions

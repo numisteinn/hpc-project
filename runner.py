@@ -1,3 +1,4 @@
+import argparse
 from argparse import ArgumentParser
 
 
@@ -14,31 +15,34 @@ def main():
         "-t", type=int, help="Current time of the simulation", default=0
     )
     parser.add_argument(
-        "-tEnd", type=float, help="Time at which simulation ends", default=10.0
+        "-t_end", type=float, help="Time at which simulation ends", default=10.0
     )
     parser.add_argument("-dt", type=float, help="Size of a timestep", default=0.01)
     parser.add_argument("-softening", type=float, help="Softening length", default=0.1)
     parser.add_argument("-G", type=float, help="Gravitational constant", default=1.0)
     parser.add_argument(
-        "-plotRealTime",
+        "--plot_real_time",
         type=bool,
         help="Enable plotting as the simulation goes along",
         default=False,
     )
-    parser.add_argument("-measureTime", type=bool, help="Measure time", default=False)
+    parser.add_argument("--measure_time", type=bool, help="Measure time", default=False, action=argparse.BooleanOptionalAction)
     args = parser.parse_args()
 
     match args.mode:
         case "cython":
-            from nbody_cython.nbody_cython import main
+            from nbody_cython.nbody_cython import main as nbody
         case "original":
-            from nbody_original.nbody_original import main
+            from nbody_original.nbody_original import main as nbody
+        case "pytorch":
+            print("PyTorch mode not implemented yet. Using original mode for now.")
+            from nbody_original.nbody_original import main as nbody
         case _:
-            from nbody_original.nbody_original import main
+            from nbody_original.nbody_original import main as nbody
 
     kwargs = vars(args)
     del kwargs["mode"]
-    main(**kwargs)
+    nbody(**kwargs)
 
 
 if __name__ == "__main__":
