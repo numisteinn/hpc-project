@@ -14,7 +14,18 @@ Code calculates pairwise forces according to Newton's Law of Gravity
 """
 
 
-def main(N=100, t=0, tEnd=10.0, dt=0.01, softening=0.1, G=1.0, plotRealTime=False, measureTime=False, pos=None, vel=None):
+def main(
+    N=100,
+    t=0,
+    tEnd=10.0,
+    dt=0.01,
+    softening=0.1,
+    G=1.0,
+    plotRealTime=False,
+    measureTime=False,
+    pos=None,
+    vel=None,
+):
     """N-body simulation"""
 
     # Generate Initial Conditions
@@ -30,7 +41,7 @@ def main(N=100, t=0, tEnd=10.0, dt=0.01, softening=0.1, G=1.0, plotRealTime=Fals
     vel -= np.mean(mass * vel, 0) / np.mean(mass)
 
     # calculate initial gravitational accelerations
-    acc = cythonfn.getAcc(pos, mass, G, softening)
+    acc = cythonfn.get_acc(pos, mass, G, softening)
 
     # calculate initial energy of system
     KE, PE = cythonfn.getEnergy(pos, vel, mass, G)
@@ -59,7 +70,7 @@ def main(N=100, t=0, tEnd=10.0, dt=0.01, softening=0.1, G=1.0, plotRealTime=Fals
         pos += vel * dt
 
         # update accelerations
-        acc = cythonfn.getAcc(pos, mass, G, softening)
+        acc = cythonfn.get_acc(pos, mass, G, softening)
 
         # (1/2) kick
         vel += acc * dt / 2.0
@@ -90,6 +101,7 @@ def main(N=100, t=0, tEnd=10.0, dt=0.01, softening=0.1, G=1.0, plotRealTime=Fals
 
     if pos is not None and vel is not None:
         return pos, vel
+
 
 if __name__ == "__main__":
     main()

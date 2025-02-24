@@ -2,10 +2,10 @@ import numpy as np
 cimport numpy as np
 cimport cython
 
-def getAcc(np.ndarray[np.float64_t, ndim=2] pos, 
-           np.ndarray[np.float64_t, ndim=2] mass, 
-           double G, 
-           double softening):
+def get_acc(   np.ndarray[np.float64_t, ndim=2] pos,
+            np.ndarray[np.float64_t, ndim=2] mass,
+            double G,
+            double softening):
     """
     Calculate the acceleration on each particle due to Newton's Law
         pos  is an N x 3 matrix of positions
@@ -35,7 +35,7 @@ def getAcc(np.ndarray[np.float64_t, ndim=2] pos,
 
     return a
 
-def getEnergy(np.ndarray[np.float64_t, ndim=2] pos, 
+def getEnergy(np.ndarray[np.float64_t, ndim=2] pos,
               np.ndarray[np.float64_t, ndim=2] vel, 
               np.ndarray[np.float64_t, ndim=2] mass, 
               double G):
