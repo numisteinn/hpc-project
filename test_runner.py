@@ -58,12 +58,12 @@ class TestNBodySimulation(unittest.TestCase):
         final_pos, final_vel = original_main(
             N=N,
             t=0,
-            tEnd=10.0,
+            t_end=10.0,
             dt=0.01,
             softening=0.1,
             G=1.0,
-            plotRealTime=False,
-            measureTime=False,
+            plot_real_time=False,
+            measure_time=False,
             pos=pos,
             vel=vel,
         )

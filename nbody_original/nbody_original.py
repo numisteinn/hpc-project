@@ -13,7 +13,7 @@ Code calculates pairwise forces according to Newton's Law of Gravity
 """
 
 
-def getAcc(pos, mass, G, softening):
+def get_acc(pos, mass, G, softening):
     """
     Calculate the acceleration on each particle due to Newton's Law
         pos  is an N x 3 matrix of positions
@@ -46,7 +46,7 @@ def getAcc(pos, mass, G, softening):
     return a
 
 
-def getEnergy(pos, vel, mass, G):
+def get_energy(pos, vel, mass, G):
     """
     Get kinetic energy (KE) and potential energy (PE) of simulation
     pos is N x 3 matrix of positions
@@ -84,12 +84,12 @@ def getEnergy(pos, vel, mass, G):
 def main(
     N=100,
     t=0,
-    tEnd=10.0,
+    t_end=10.0,
     dt=0.01,
     softening=0.1,
     G=1.0,
-    plotRealTime=False,
-    measureTime=False,
+    plot_real_time=False,
+    measure_time=False,
     pos=None,
     vel=None,
 ):
@@ -108,13 +108,13 @@ def main(
     vel -= np.mean(mass * vel, 0) / np.mean(mass)
 
     # calculate initial gravitational accelerations
-    acc = getAcc(pos, mass, G, softening)
+    acc = get_acc(pos, mass, G, softening)
 
     # calculate initial energy of system
-    KE, PE = getEnergy(pos, vel, mass, G)
+    KE, PE = get_energy(pos, vel, mass, G)
 
     # number of timesteps
-    Nt = int(np.ceil(tEnd / dt))
+    Nt = int(np.ceil(t_end / dt))
 
     # save energies, particle orbits for plotting trails
     pos_save = np.zeros((N, 3, Nt + 1))
@@ -137,7 +137,7 @@ def main(
         pos += vel * dt
 
         # update accelerations
-        acc = getAcc(pos, mass, G, softening)
+        acc = get_acc(pos, mass, G, softening)
 
         # (1/2) kick
         vel += acc * dt / 2.0
@@ -146,7 +146,7 @@ def main(
         t += dt
 
         # get energy of system
-        KE, PE = getEnergy(pos, vel, mass, G)
+        KE, PE = get_energy(pos, vel, mass, G)
 
         # save energies, positions for plotting trail
         pos_save[:, :, i] = pos
@@ -154,16 +154,16 @@ def main(
         PE_save[i] = PE
 
         # plot in real time
-        if plotRealTime:
+        if plot_real_time:
             plot_state(i, t_all, pos_save, KE_save, PE_save)
 
     end_time = time.time()
-    if measureTime:
+    if measure_time:
         print(f"Execution time: {end_time - start_time} seconds")
 
     plot_state(i, t_all, pos_save, KE_save, PE_save)
     plot_finalize(
-        f"{os.path.dirname(os.path.abspath(__file__))}/nbody_original_{N}_{tEnd}_{dt}_{softening}_{G}.png"
+        f"{os.path.dirname(os.path.abspath(__file__))}/nbody_original_{N}_{t_end}_{dt}_{softening}_{G}.png"
     )
 
     if pos is not None and vel is not None:
