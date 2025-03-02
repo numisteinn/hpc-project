@@ -1,0 +1,27 @@
+qt.qpa.theme.dbus: Session DBus not running.
+qt.qpa.theme.dbus: Application will not react to setting changes.
+ Check your DBus installation.
+
+ Performance counter stats for 'system wide':
+
+    72,403,091,849      cpu_core/cycles/                 #  395.577 M/sec                  
+     4,066,790,892      cpu_atom/cycles/                 #   22.219 M/sec                  
+   227,600,833,631      cpu_core/instructions/           #    1.244 G/sec                  
+     2,344,713,668      cpu_atom/instructions/           #   12.810 M/sec                  
+        62,077,811      cpu_core/cache-references/       #  339.164 K/sec                  
+        48,680,336      cpu_atom/cache-references/       #  265.967 K/sec                  
+        23,426,291      cpu_core/cache-misses/           #  127.990 K/sec                  
+        21,564,222      cpu_atom/cache-misses/           #  117.817 K/sec                  
+    19,666,373,217      cpu_core/branches/               #  107.448 M/sec                  
+       405,137,791      cpu_atom/branches/               #    2.213 M/sec                  
+        23,093,671      cpu_core/branch-misses/          #  126.173 K/sec                  
+         7,729,807      cpu_atom/branch-misses/          #   42.232 K/sec                  
+        183,031.69 msec task-clock                       #   12.000 CPUs utilized          
+            59,319      faults                           #  324.091 /sec                   
+            59,285      minor-faults                     #  323.906 /sec                   
+                34      major-faults                     #    0.186 /sec                   
+            15,461      cs                               #   84.472 /sec                   
+               517      migrations                       #    2.825 /sec                   
+
+      15.252937763 seconds time elapsed
+

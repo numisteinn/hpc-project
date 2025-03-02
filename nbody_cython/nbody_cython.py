@@ -2,6 +2,7 @@ import numpy as np
 import os
 
 import sys
+
 # Add the directory containing cythonnf module to the Python path (wants absolute paths)
 sys.path.append(os.path.dirname(__file__))
 import cythonfn
@@ -35,14 +36,14 @@ def main(
     # Generate Initial Conditions
     np.random.seed(17)  # set the random number generator seed
 
-    mass = 20.0 * np.ones((N, 1)) / N  # total mass of particles is 20
+    mass = 20.0 * np.ones(N) / N  # total mass of particles is 20
     if pos is None:
         pos = np.random.randn(N, 3)  # randomly selected positions and velocities
     if vel is None:
         vel = np.random.randn(N, 3)
 
     # Convert to Center-of-Mass frame
-    vel -= np.mean(mass * vel, 0) / np.mean(mass)
+    vel -= np.mean(mass[:, None] * vel, 0) / np.mean(mass)
 
     # calculate initial gravitational accelerations
     acc = cythonfn.get_acc(pos, mass, G, softening)

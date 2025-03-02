@@ -1,72 +1,72 @@
+# cython: boundscheck=False, wraparound=False, nonecheck=False, cdivision=True
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 cimport cython
+from cython.parallel import prange
+from libc.math cimport sqrt, pow
+
+cnp.import_array()
+
+DTYPE = np.float64
+
+ctypedef cnp.float64_t DTYPE_t
 
 def get_acc(
-        np.ndarray[np.float64_t, ndim=2] pos,
-        np.ndarray[np.float64_t, ndim=2] mass,
-        double G,
-        double softening
+    cnp.ndarray[DTYPE_t, ndim=2] pos,
+    cnp.ndarray[DTYPE_t, ndim=1] mass,
+    double G,
+    double softening
 ):
-    """
-    Calculate the acceleration on each particle due to Newton's Law
-        pos  is an N x 3 matrix of positions
-        mass is an N x 1 vector of masses
-        G is Newton's Gravitational constant
-        softening is the softening length
-        a is N x 3 matrix of accelerations
-    """
 
     cdef int N = pos.shape[0]
-    cdef np.ndarray[np.float64_t, ndim=2] x = pos[:, 0:1]
-    cdef np.ndarray[np.float64_t, ndim=2] y = pos[:, 1:2]
-    cdef np.ndarray[np.float64_t, ndim=2] z = pos[:, 2:3]
+    cdef cnp.ndarray[DTYPE_t, ndim=2] acc = np.zeros((N, 3), dtype=DTYPE)
+    cdef int i, j
+    cdef double dx, dy, dz, inv_r3, r2
 
-    cdef np.ndarray[np.float64_t, ndim=2] dx = x.T - x
-    cdef np.ndarray[np.float64_t, ndim=2] dy = y.T - y
-    cdef np.ndarray[np.float64_t, ndim=2] dz = z.T - z
+    # Compute pairwise accelerations
+    for i in prange(N, nogil="True"):
+        for j in range(N):
+            if i != j:
+                dx = pos[j, 0] - pos[i, 0]
+                dy = pos[j, 1] - pos[i, 1]
+                dz = pos[j, 2] - pos[i, 2]
 
-    cdef np.ndarray[np.float64_t, ndim=2] inv_r3 = dx**2 + dy**2 + dz**2 + softening**2
-    inv_r3[inv_r3 > 0] = inv_r3[inv_r3 > 0] ** (-1.5)
+                r2 = dx * dx + dy * dy + dz * dz + softening * softening
+                inv_r3 = pow(r2, -1.5) if r2 > 0 else 0.0
 
-    cdef np.ndarray[np.float64_t, ndim=2] ax = G * (dx * inv_r3) @ mass
-    cdef np.ndarray[np.float64_t, ndim=2] ay = G * (dy * inv_r3) @ mass
-    cdef np.ndarray[np.float64_t, ndim=2] az = G * (dz * inv_r3) @ mass
+                acc[i, 0] += G * dx * inv_r3 * mass[j]
+                acc[i, 1] += G * dy * inv_r3 * mass[j]
+                acc[i, 2] += G * dz * inv_r3 * mass[j]
 
-    cdef np.ndarray[np.float64_t, ndim=2] a = np.hstack((ax, ay, az))
+    return acc
 
-    return a
 
-def get_energy(np.ndarray[np.float64_t, ndim=2] pos,
-               np.ndarray[np.float64_t, ndim=2] vel,
-               np.ndarray[np.float64_t, ndim=2] mass,
-               double G):
-    """
-    Get kinetic energy (KE) and potential energy (PE) of simulation
-    pos is N x 3 matrix of positions
-    vel is N x 3 matrix of velocities
-    mass is an N x 1 vector of masses
-    G is Newton's Gravitational constant
-    KE is the kinetic energy of the system
-    PE is the potential energy of the system
-    """
-
+def get_energy(
+    cnp.ndarray[DTYPE_t, ndim=2] pos,
+    cnp.ndarray[DTYPE_t, ndim=2] vel,
+    cnp.ndarray[DTYPE_t, ndim=1] mass,
+    double G
+):
     cdef int N = pos.shape[0]
-    cdef np.ndarray[np.float64_t, ndim=2] x = pos[:, 0:1]
-    cdef np.ndarray[np.float64_t, ndim=2] y = pos[:, 1:2]
-    cdef np.ndarray[np.float64_t, ndim=2] z = pos[:, 2:3]
+    cdef int i, j
+    cdef double KE = 0, PE = 0
+    cdef double dx, dy, dz, inv_r
 
-    # Kinetic Energy:
-    cdef double KE = 0.5 * np.sum(np.sum(mass * vel**2))
+    # Compute kinetic energy (vectorized)
+    for i in prange(N, nogil=True):
+        KE += 0.5 * mass[i] * (vel[i, 0]**2 + vel[i, 1]**2 + vel[i, 2]**2)
 
-    # Potential Energy:
-    cdef np.ndarray[np.float64_t, ndim=2] dx = x.T - x
-    cdef np.ndarray[np.float64_t, ndim=2] dy = y.T - y
-    cdef np.ndarray[np.float64_t, ndim=2] dz = z.T - z
+    # Compute potential energy
+    for i in prange(N, nogil=True):
+        for j in range(i + 1, N):
+            dx = pos[j, 0] - pos[i, 0]
+            dy = pos[j, 1] - pos[i, 1]
+            dz = pos[j, 2] - pos[i, 2]
 
-    cdef np.ndarray[np.float64_t, ndim=2] inv_r = np.sqrt(dx**2 + dy**2 + dz**2)
-    inv_r[inv_r > 0] = 1.0 / inv_r[inv_r > 0]
+            inv_r = sqrt(dx * dx + dy * dy + dz * dz)
+            inv_r = 1.0 / inv_r if inv_r > 0 else 0
 
-    cdef double PE = G * np.sum(np.sum(np.triu(-(mass * mass.T) * inv_r, 1)))
+            PE += -G * mass[i] * mass[j] * inv_r
 
     return KE, PE
+
