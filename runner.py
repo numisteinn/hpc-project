@@ -26,7 +26,7 @@ def main():
         help="Enable plotting as the simulation goes along",
         default=False,
     )
-    parser.add_argument("--measure_time", type=bool, help="Measure time", default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument("--measure_time", type=bool, help="Measure time", default=True, action=argparse.BooleanOptionalAction)
     args = parser.parse_args()
 
     match args.mode:
@@ -35,8 +35,7 @@ def main():
         case "original":
             from nbody_original.nbody_original import main as nbody
         case "pytorch":
-            print("PyTorch mode not implemented yet. Using original mode for now.")
-            from nbody_original.nbody_original import main as nbody
+            from nbody_pytorch.nbody_pytorch import main as nbody
         case _:
             from nbody_original.nbody_original import main as nbody
 
