@@ -74,6 +74,9 @@ def main(
 ):
     # Set device (GPU if available)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # device = "cpu"
+
+    print(device)
 
     # Initialize masses as a [N,1] tensor on device.
     mass = (20.0 * torch.ones((N, 1), device=device)) / N
