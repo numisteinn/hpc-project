@@ -166,8 +166,7 @@ def main(
         f"{os.path.dirname(os.path.abspath(__file__))}/nbody_original_{N}_{t_end}_{dt}_{softening}_{G}.png"
     )
 
-    if pos is not None and vel is not None:
-        return pos, vel
+    return pos, vel, KE_save, PE_save
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 import numpy as np
 cimport numpy as cnp
 cimport cython
-from cython.parallel import prange
+from cython.parallel cimport prange
 from libc.math cimport sqrt, pow
 
 cnp.import_array()
