@@ -6,10 +6,13 @@ Simulate orbits of stars interacting due to gravity
 Code calculates pairwise forces according to Newton's Law of Gravity
 """
 
+import os
 import time
+
 import numpy as np
 import dask.array as da
-from plot import prep_figure, plot_state
+
+from plot import prep_figure, plot_state, plot_finalize
 
 
 def get_acc_dask(pos, mass, G, softening):
@@ -38,7 +41,7 @@ def get_energy_dask(pos, vel, mass, G):
 
     PE = G * da.sum(da.sum(da.triu(-(mass * mass.T) * inv_r, 1)))
 
-    return KE.compute(), PE.compute()
+    return KE, PE
 
 
 def main(
@@ -59,18 +62,25 @@ def main(
     vel = da.from_array(np.random.randn(N, 3) if vel is None else vel)
     vel -= da.mean(mass * vel, axis=0) / da.mean(mass)
 
-    acc = get_acc_dask(pos, mass, G, softening)
+    acc = get_acc_dask(pos, mass, G, softening).persist()
     KE, PE = get_energy_dask(pos, vel, mass, G)
 
-    Nt = int(np.ceil(t_end / dt))
-    pos_save = np.zeros((N, 3, Nt + 1))
-    KE_save, PE_save = np.zeros(Nt + 1), np.zeros(Nt + 1)
-    pos_save[:, :, 0], KE_save[0], PE_save[0] = pos.compute(), KE, PE
+    # Nt = int(np.ceil(t_end / dt))
+    # Dask is slow, so we'll just do 100 steps
+    Nt = 100
+    pos_save = da.zeros((N, 3, Nt + 1))
+    KE_save, PE_save = da.zeros(Nt + 1), da.zeros(Nt + 1)
+    pos_save[:, :, 0], KE_save[0], PE_save[0] = (
+        pos.persist(),
+        KE.persist(),
+        PE.persist(),
+    )
     t_all = np.arange(Nt + 1) * dt
 
     prep_figure()
     start_time = time.time()
 
+    p_time = time.time()
     for i in range(1, Nt + 1):
         vel += acc * dt / 2.0
         pos += vel * dt
@@ -78,17 +88,33 @@ def main(
         vel += acc * dt / 2.0
         t += dt
         KE, PE = get_energy_dask(pos, vel, mass, G)
-        pos_save[:, :, i], KE_save[i], PE_save[i] = pos.compute(), KE, PE
+        pos_save[:, :, i], KE_save[i], PE_save[i] = (
+            pos,
+            KE,
+            PE,
+        )
 
-        if plot_real_time:
-            plot_state(i, t_all, pos_save, KE_save, PE_save)
+        if i % 10 == 0:
+            print(f"Logging... {i}/{Nt}")
+            print(f"Time since last log: {time.time() - p_time}")
+            p_time = time.time()
+            # Live plotting is basically impossible with dask
+            # plot_state(
+            #     i, t_all, pos_save.compute(), KE_save.compute(), PE_save.compute()
+            # )
 
-    end_time = time.time()
+
+    output_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        f"nbody_pytorch_{N}_{t_end}_{dt}_{softening}_{G}.png",
+    )
+    print(f"Computing final results after {time.time() - start_time} seconds")
+    out = pos.compute(), vel.compute(), KE_save.compute(), PE_save.compute()
     if measure_time:
-        print(f"Execution time: {end_time - start_time} seconds")
-
+        print(f"Execution time: {time.time() - start_time} seconds")
     plot_state(i, t_all, pos_save, KE_save, PE_save)
-    return pos.compute(), vel.compute(), KE_save, PE_save
+    plot_finalize(output_path)
+    return out
 
 
 if __name__ == "__main__":
