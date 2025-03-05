@@ -33,7 +33,8 @@ def get_energy_dask(pos, vel, mass, G):
     dx, dy, dz = x.T - x, y.T - y, z.T - z
 
     inv_r = da.sqrt(dx**2 + dy**2 + dz**2)
-    inv_r = da.where(inv_r > 0, 1.0 / inv_r, 0)
+    epsilon = 1e-5
+    inv_r = da.where(inv_r > 0, 1.0 / (inv_r + epsilon), 0)
 
     PE = G * da.sum(da.sum(da.triu(-(mass * mass.T) * inv_r, 1)))
 
