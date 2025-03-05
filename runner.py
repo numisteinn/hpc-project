@@ -6,9 +6,9 @@ def main():
     parser = ArgumentParser()
     parser.add_argument(
         "-mode",
-        choices=["original", "cython", "pytorch"],
+        choices=["original", "cython", "dask", "pytorch"],
         default="original",
-        help="Choose execution mode: original (default), cython, or pytorch",
+        help="Choose execution mode: original (default), cython, dask, or pytorch",
     )
     parser.add_argument("-N", type=int, help="Number of particles", default=100)
     parser.add_argument(
@@ -26,7 +26,13 @@ def main():
         help="Enable plotting as the simulation goes along",
         default=False,
     )
-    parser.add_argument("--measure_time", type=bool, help="Measure time", default=True, action=argparse.BooleanOptionalAction)
+    parser.add_argument(
+        "--measure_time",
+        type=bool,
+        help="Measure time",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+    )
     args = parser.parse_args()
 
     match args.mode:
@@ -34,6 +40,8 @@ def main():
             from nbody_cython.nbody_cython import main as nbody
         case "original":
             from nbody_original.nbody_original import main as nbody
+        case "dask":
+            from nbody_dask.nbody_dask import main as nbody
         case "pytorch":
             from nbody_pytorch.nbody_pytorch import main as nbody
         case _:
