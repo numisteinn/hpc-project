@@ -172,3 +172,5 @@ cython_debug/
 
 *.nix
 *.png
+# exclude root png files
+!/*.png
