@@ -1,10 +1,15 @@
 import unittest
+import random
+
 import numpy as np
+import torch
 
 # Import the main function from the module containing your simulation.
 # Replace 'nbody_simulation' with the actual module name.
 from nbody_original.nbody_original import main as original_main
 from nbody_cython.nbody_cython import main as cython_main
+from nbody_original.nbody_pure_python import main as pure_main
+from nbody_pytorch.nbody_pytorch import main as torch_main
 
 
 class TestNBodySimulation(unittest.TestCase):
@@ -16,6 +21,7 @@ class TestNBodySimulation(unittest.TestCase):
             "dt": 0.01,
             "softening": 0.1,
             "G": 1.0,
+            "plot_real_time": False,
         }
 
     def test_cython_implementation(self):
@@ -29,6 +35,55 @@ class TestNBodySimulation(unittest.TestCase):
         np.testing.assert_array_almost_equal(original_vel, cython_vel)
         np.testing.assert_array_almost_equal(original_KE, cython_KE)
         np.testing.assert_array_almost_equal(original_PE, cython_PE)
+
+    def test_pure_implementations(self):
+        N = 100
+        random.seed(42)
+        pos = [[random.gauss(0, 1) for _ in range(3)] for _ in range(N)]
+        vel = [[random.gauss(0, 1) for _ in range(3)] for _ in range(N)]
+        original_pos, original_vel, original_KE, original_PE = original_main(
+            **{
+                **self.get_sim_params(),
+                "pos": np.asarray(pos),
+                "vel": np.asarray(vel),
+            }
+        )
+        pure_pos, pure_vel, pure_KE, pure_PE = pure_main(
+            **{
+                **self.get_sim_params(),
+                "pos": pos,
+                "vel": vel,
+            }
+        )
+        np.testing.assert_array_almost_equal(original_pos, pure_pos)
+        np.testing.assert_array_almost_equal(original_vel, pure_vel)
+        np.testing.assert_array_almost_equal(original_KE, pure_KE)
+        np.testing.assert_array_almost_equal(original_PE, pure_PE)
+
+    def test_pytorch_implmentation(self):
+        np.random.seed(42)
+        N = 100
+        pos = np.random.randn(N, 3).astype(np.float32)
+        vel = np.random.randn(N, 3).astype(np.float32)
+        original_pos, original_vel, original_KE, original_PE = original_main(
+            **{
+                **self.get_sim_params(),
+                "pos": pos.copy(),
+                "vel": vel.copy(),
+            }
+        )
+        torch_pos, torch_vel, torch_KE, torch_PE = torch_main(
+            **{
+                **self.get_sim_params(),
+                "pos_init": torch.from_numpy(pos.copy()),
+                "vel_init": torch.from_numpy(vel.copy()),
+            }
+        )
+        d =5
+        np.testing.assert_array_almost_equal(original_pos, torch_pos)
+        np.testing.assert_array_almost_equal(original_vel, torch_vel, decimal=d)
+        np.testing.assert_array_almost_equal(original_KE, torch_KE)
+        np.testing.assert_array_almost_equal(original_PE, torch_PE, decimal=d)
 
 
 if __name__ == "__main__":
