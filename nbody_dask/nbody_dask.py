@@ -6,27 +6,46 @@ Simulate orbits of stars interacting due to gravity
 Code calculates pairwise forces according to Newton's Law of Gravity
 """
 
-import os
 import time
 
 import numpy as np
 import dask.array as da
 
-from plot import prep_figure, plot_state, plot_finalize
+
+def compute_acc_chunk(pos_block, mass, G, softening):
+    print(f"Computing acceleration for chunk of shape {pos_block.shape}")
+    print(f"Mass shape: {mass.shape}")
+    x = pos_block[:, 0:1]
+    y = pos_block[:, 1:2]
+    z = pos_block[:, 2:3]
+
+    # matrix that stores all pairwise particle separations: r_j - r_i
+    dx = x.T - x
+    dy = y.T - y
+    dz = z.T - z
+
+    # matrix that stores 1/r^3 for all particle pairwise particle separations
+    inv_r3 = dx**2 + dy**2 + dz**2 + softening**2
+    inv_r3[inv_r3 > 0] = inv_r3[inv_r3 > 0] ** (-1.5)
+
+    m = mass[: pos_block.shape[0], :]
+    ax = G * (dx * inv_r3) @ m
+    ay = G * (dy * inv_r3) @ m
+    az = G * (dz * inv_r3) @ m
+
+    # pack together the acceleration components
+    a = np.hstack((ax, ay, az))
+    return a
 
 
 def get_acc_dask(pos, mass, G, softening):
-    x, y, z = pos[:, 0:1], pos[:, 1:2], pos[:, 2:3]
-    dx, dy, dz = x.T - x, y.T - y, z.T - z
-
-    inv_r3 = dx**2 + dy**2 + dz**2 + softening**2
-    inv_r3 = da.where(inv_r3 > 0, inv_r3 ** (-1.5), 0)
-
-    ax = G * da.matmul(dx * inv_r3, mass)
-    ay = G * da.matmul(dy * inv_r3, mass)
-    az = G * da.matmul(dz * inv_r3, mass)
-
-    return da.hstack((ax, ay, az))
+    # TODO: This does not correctly calculate acc, Have to understand better how chunking works.
+    return pos.map_overlap(
+        lambda p: compute_acc_chunk(p, mass, G, softening),
+        depth=(1, 0),
+        boundary="reflect",
+        dtype=np.float64,
+    )
 
 
 def get_energy_dask(pos, vel, mass, G):
@@ -57,63 +76,41 @@ def main(
     vel=None,
 ):
     np.random.seed(17)
-    mass = da.from_array(20.0 * np.ones((N, 1)) / N)
-    pos = da.from_array(np.random.randn(N, 3)) if pos is None else pos
-    vel = da.from_array(np.random.randn(N, 3)) if vel is None else vel
-    vel -= da.mean(mass * vel, axis=0) / da.mean(mass)
-
-    acc = get_acc_dask(pos, mass, G, softening).persist()
-    KE, PE = get_energy_dask(pos, vel, mass, G)
-
-    # Nt = int(np.ceil(t_end / dt))
-    # Dask is slow, so we'll just do 100 steps
-    Nt = 100
-    pos_save = da.zeros((N, 3, Nt + 1))
-    KE_save, PE_save = da.zeros(Nt + 1), da.zeros(Nt + 1)
-    pos_save[:, :, 0], KE_save[0], PE_save[0] = (
-        pos.persist(),
-        KE.persist(),
-        PE.persist(),
+    # mass = da.from_array(20.0 * np.ones((N, 1)) / N)
+    mass = da.from_array(20.0 * np.ones((N, 1)) / N, chunks=(N // 4, 1))
+    pos = (
+        da.from_array(np.random.randn(N, 3), chunks=(N // 4, 3)) if pos is None else pos
     )
-    t_all = np.arange(Nt + 1) * dt
+    vel = (
+        da.from_array(np.random.randn(N, 3), chunks=(N // 4, 3)) if vel is None else vel
+    )
+    vel -= da.mean(mass * vel, axis=0) / da.mean(mass)
+    acc = get_acc_dask(pos, mass, G, softening)
+    print(f"pos shape: {pos.chunks}")
+    print(f"Mass shape: {acc.chunks}")
+    print(f"Dask Initial accelerations: {acc[:5].compute()}")
 
-    prep_figure()
+    Nt = int(np.ceil(t_end / dt))
     start_time = time.time()
-
     p_time = time.time()
-    for i in range(1, Nt + 1):
-        vel += acc * dt / 2.0
-        pos += vel * dt
-        acc = get_acc_dask(pos, mass, G, softening)
-        vel += acc * dt / 2.0
-        t += dt
-        KE, PE = get_energy_dask(pos, vel, mass, G)
-        pos_save[:, :, i], KE_save[i], PE_save[i] = (
-            pos,
-            KE,
-            PE,
+    # for i in range(1, Nt + 1):
+    #     vel += acc * dt / 2.0
+    #     pos += vel * dt
+    #     acc = get_acc_dask(pos, mass, G, softening)
+    #     vel += acc * dt / 2
+    #     if i % 10 == 0:
+    #         print(f"Logging... {i}/{Nt}")
+    #         print(f"Time since last log: {time.time() - p_time}")
+    #         p_time = time.time()
+
+    KE, PE = get_energy_dask(pos, vel, mass, G)
+    print("Computing...")
+    out = pos.compute(), vel.compute(), KE.compute(), PE.compute()
+    if measure_time:
+        print(
+            f"Execution time: {time.time() - start_time} seconds for {Nt} steps and {N} particles"
         )
 
-        if i % 10 == 0:
-            print(f"Logging... {i}/{Nt}")
-            print(f"Time since last log: {time.time() - p_time}")
-            p_time = time.time()
-            # Live plotting is basically impossible with dask
-            # plot_state(
-            #     i, t_all, pos_save.compute(), KE_save.compute(), PE_save.compute()
-            # )
-
-
-    output_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        f"nbody_pytorch_{N}_{t_end}_{dt}_{softening}_{G}.png",
-    )
-    print(f"Computing final results after {time.time() - start_time} seconds")
-    out = pos.compute(), vel.compute(), KE_save.compute(), PE_save.compute()
-    if measure_time:
-        print(f"Execution time: {time.time() - start_time} seconds")
-    plot_state(i, t_all, pos_save, KE_save, PE_save)
-    plot_finalize(output_path)
     return out
 
 

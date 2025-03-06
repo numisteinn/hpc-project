@@ -1,8 +1,7 @@
 import numpy as np
-import os
 import time
 
-from plot import prep_figure, plot_state, plot_finalize
+from plot import prep_figure, plot_state
 
 """
 Create Your Own N-body Simulation (With Python)
@@ -110,6 +109,7 @@ def main(
     # calculate initial gravitational accelerations
     acc = get_acc(pos, mass, G, softening)
 
+    print(f"Dask Initial accelerations: {acc[:5]}")
     # calculate initial energy of system
     KE, PE = get_energy(pos, vel, mass, G)
 
@@ -157,14 +157,15 @@ def main(
         if plot_real_time:
             plot_state(i, t_all, pos_save, KE_save, PE_save)
 
-    end_time = time.time()
     if measure_time:
-        print(f"Execution time: {end_time - start_time} seconds")
+        print(
+            f"Execution time: {time.time() - start_time} seconds for {Nt} steps and {N} particles"
+        )
 
-    plot_state(i, t_all, pos_save, KE_save, PE_save)
-    plot_finalize(
-        f"{os.path.dirname(os.path.abspath(__file__))}/nbody_original_{N}_{t_end}_{dt}_{softening}_{G}.png"
-    )
+    # plot_state(i, t_all, pos_save, KE_save, PE_save)
+    # plot_finalize(
+    #     f"{os.path.dirname(os.path.abspath(__file__))}/nbody_original_{N}_{t_end}_{dt}_{softening}_{G}.png"
+    # )
 
     return pos, vel, KE_save, PE_save
 
