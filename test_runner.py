@@ -3,6 +3,7 @@ import random
 
 import numpy as np
 import torch
+import dask.array as da
 
 # Import the main function from the module containing your simulation.
 # Replace 'nbody_simulation' with the actual module name.
@@ -10,6 +11,7 @@ from nbody_original.nbody_original import main as original_main
 from nbody_cython.nbody_cython import main as cython_main
 from nbody_original.nbody_pure_python import main as pure_main
 from nbody_pytorch.nbody_pytorch import main as torch_main
+from nbody_dask.nbody_dask import main as dask_main
 
 
 class TestNBodySimulation(unittest.TestCase):
@@ -79,12 +81,38 @@ class TestNBodySimulation(unittest.TestCase):
                 "vel_init": torch.from_numpy(vel.copy()),
             }
         )
-        d =5
+        d = 5
         np.testing.assert_array_almost_equal(original_pos, torch_pos)
         np.testing.assert_array_almost_equal(original_vel, torch_vel, decimal=d)
         np.testing.assert_array_almost_equal(original_KE, torch_KE)
         np.testing.assert_array_almost_equal(original_PE, torch_PE, decimal=d)
 
+    def test_dask_implementation(self):
+        np.random.seed(42)
+        N = 10
+        pos = np.random.randn(N, 3).astype(np.float32)
+        vel = np.random.randn(N, 3).astype(np.float32)
+        original_pos, original_vel, original_KE, original_PE = original_main(
+            **{
+                **self.get_sim_params(),
+                "N": N,
+                "pos": pos.copy(),
+                "vel": vel.copy(),
+            }
+        )
+        dask_pos, dask_vel, dask_KE, dask_PE = dask_main(
+            **{
+                **self.get_sim_params(),
+                "N": N,
+                "pos": da.from_array(pos.copy()),
+                "vel": da.from_array(vel.copy()),
+            }
+        )
+        d = 3
+        np.testing.assert_array_almost_equal(original_pos, dask_pos, decimal=d)
+        np.testing.assert_array_almost_equal(original_vel, dask_vel, decimal=d)
+        np.testing.assert_array_almost_equal(original_KE, dask_KE, decimal=d)
+        np.testing.assert_array_almost_equal(original_PE, dask_PE, decimal=1)
 
 if __name__ == "__main__":
     unittest.main()
