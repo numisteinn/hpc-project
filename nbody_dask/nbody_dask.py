@@ -109,7 +109,7 @@ def main(
         f"nbody_pytorch_{N}_{t_end}_{dt}_{softening}_{G}.png",
     )
     print(f"Computing final results after {time.time() - start_time} seconds")
-    out = pos.compute(), vel.compute(), KE_save.compute(), PE_save.compute()
+    out = pos.compute(), pos_save.compute(), KE_save.compute(), PE_save.compute()
     if measure_time:
         print(f"Execution time: {time.time() - start_time} seconds")
     plot_state(i, t_all, pos_save, KE_save, PE_save)

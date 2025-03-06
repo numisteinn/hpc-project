@@ -6,7 +6,7 @@ def main():
     parser = ArgumentParser()
     parser.add_argument(
         "-mode",
-        choices=["original", "cython", "dask", "pytorch"],
+        choices=["original", "cython", "dask", "pytorch", "pure"],
         default="original",
         help="Choose execution mode: original (default), cython, dask, or pytorch",
     )
@@ -42,6 +42,8 @@ def main():
             from nbody_original.nbody_original import main as nbody
         case "dask":
             from nbody_dask.nbody_dask import main as nbody
+        case "pure":
+            from nbody_original.nbody_pure_python import main as nbody
         case "pytorch":
             from nbody_pytorch.nbody_pytorch import main as nbody
         case _:
