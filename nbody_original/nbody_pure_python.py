@@ -77,7 +77,6 @@ def get_energy(pos, vel, mass, G):
             dx = pos[j][0] - pos[i][0]
             dy = pos[j][1] - pos[i][1]
             dz = pos[j][2] - pos[i][2]
-            r = math.sqrt(dx**2 + dy**2 + dz**2) + 1e-5  # Avoid singularities
             PE -= G * mass[i] * mass[j] / r
 
     return KE, PE
@@ -100,8 +99,16 @@ def main(
 
     # Initialize masses, positions, and velocities
     mass = [20.0 / N for _ in range(N)]
-    pos = [[random.gauss(0, 1) for _ in range(3)] for _ in range(N)]
-    vel = [[random.gauss(0, 1) for _ in range(3)] for _ in range(N)]
+    pos = (
+        [[random.gauss(0, 1) for _ in range(3)] for _ in range(N)]
+        if pos is None
+        else pos
+    )
+    vel = (
+        [[random.gauss(0, 1) for _ in range(3)] for _ in range(N)]
+        if vel is None
+        else vel
+    )
 
     # Remove momentum drift
     mean_vel = [
