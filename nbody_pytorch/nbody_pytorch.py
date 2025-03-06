@@ -4,6 +4,7 @@ import os
 
 from plot import prep_figure, plot_state, plot_finalize
 
+
 def get_acc(pos, mass, G, softening):
     """
     Compute gravitational acceleration on each particle.
@@ -23,15 +24,19 @@ def get_acc(pos, mass, G, softening):
 
     # Compute inverse r^3 with softening
     inv_r3 = dx**2 + dy**2 + dz**2 + softening**2
-    inv_r3 = torch.where(inv_r3 > 0, inv_r3**(-1.5), torch.zeros_like(inv_r3))
+    inv_r3 = torch.where(
+        inv_r3 > 0, inv_r3 ** (-1.5), torch.zeros_like(inv_r3, dtype=torch.float32)
+    )
 
     # Compute acceleration components
-    ax = G * (dx * inv_r3) @ mass
+    r_ = G * (dx * inv_r3)
+    ax = r_ @ mass
     ay = G * (dy * inv_r3) @ mass
     az = G * (dz * inv_r3) @ mass
 
     # Concatenate acceleration components into [N, 3] tensor
     return torch.cat((ax, ay, az), dim=1)
+
 
 def get_energy(pos, vel, mass, G):
     """
@@ -41,6 +46,7 @@ def get_energy(pos, vel, mass, G):
     """
     KE = 0.5 * torch.sum(mass * vel**2)
 
+    # print(f"Torch {KE, pos[:3], vel[:3]}")
     # Coordinates
     x = pos[:, 0:1]
     y = pos[:, 1:2]
@@ -52,13 +58,16 @@ def get_energy(pos, vel, mass, G):
 
     # Compute inverse distances (avoid singularity)
     inv_r = torch.sqrt(dx**2 + dy**2 + dz**2)
-    inv_r = torch.where(inv_r > 0, 1.0/inv_r, torch.zeros_like(inv_r))
+    inv_r = torch.where(
+        inv_r > 0, 1.0 / inv_r, torch.zeros_like(inv_r, dtype=torch.float32)
+    )
 
     # Use upper triangle to sum each interaction once
-    mask = torch.triu(torch.ones_like(inv_r), diagonal=1)
+    mask = torch.triu(torch.ones_like(inv_r, dtype=torch.float32), diagonal=1)
     PE = G * torch.sum((-(mass @ mass.T) * inv_r) * mask)
 
     return KE, PE
+
 
 def main(
     N=100,
@@ -73,7 +82,7 @@ def main(
     vel_init=None,
 ):
     # Set device (GPU if available)
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # device = "cpu"
 
     print(device)
@@ -131,20 +140,33 @@ def main(
 
         if plot_real_time:
             # For plotting, data may need to be moved to CPU.
-            plot_state(i, t_all.cpu().numpy(), pos_save.cpu().numpy(),
-                       KE_save.cpu().numpy(), PE_save.cpu().numpy())
+            plot_state(
+                i,
+                t_all.cpu().numpy(),
+                pos_save.cpu().numpy(),
+                KE_save.cpu().numpy(),
+                PE_save.cpu().numpy(),
+            )
 
     end_time = time.time()
     if measure_time:
         print(f"Execution time: {end_time - start_time} seconds")
 
-    plot_state(i, t_all.cpu().numpy(), pos_save.cpu().numpy(),
-               KE_save.cpu().numpy(), PE_save.cpu().numpy())
-    output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                               f"nbody_pytorch_{N}_{t_end}_{dt}_{softening}_{G}.png")
+    plot_state(
+        i,
+        t_all.cpu().numpy(),
+        pos_save.cpu().numpy(),
+        KE_save.cpu().numpy(),
+        PE_save.cpu().numpy(),
+    )
+    output_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        f"nbody_pytorch_{N}_{t_end}_{dt}_{softening}_{G}.png",
+    )
     plot_finalize(output_path)
 
-    return pos, vel
+    return pos, vel, KE_save, PE_save
+
 
 if __name__ == "__main__":
     main()
