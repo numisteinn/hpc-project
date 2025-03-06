@@ -77,6 +77,7 @@ def get_energy(pos, vel, mass, G):
             dx = pos[j][0] - pos[i][0]
             dy = pos[j][1] - pos[i][1]
             dz = pos[j][2] - pos[i][2]
+            r = math.sqrt(dx**2 + dy**2 + dz**2)
             PE -= G * mass[i] * mass[j] / r
 
     return KE, PE
