@@ -109,7 +109,6 @@ def main(
     # calculate initial gravitational accelerations
     acc = get_acc(pos, mass, G, softening)
 
-    print(f"Dask Initial accelerations: {acc[:5]}")
     # calculate initial energy of system
     KE, PE = get_energy(pos, vel, mass, G)
 
@@ -152,6 +151,10 @@ def main(
         pos_save[:, :, i] = pos
         KE_save[i] = KE
         PE_save[i] = PE
+
+        if i % 50 == 0:
+            print(f"Logging... {i}/{Nt}")
+
 
         # plot in real time
         if plot_real_time:

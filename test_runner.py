@@ -3,7 +3,6 @@ import random
 
 import numpy as np
 import torch
-import dask.array as da
 
 # Import the main function from the module containing your simulation.
 # Replace 'nbody_simulation' with the actual module name.
@@ -82,34 +81,20 @@ class TestNBodySimulation(unittest.TestCase):
         np.testing.assert_array_almost_equal(original_vel, torch_vel, decimal=d)
         np.testing.assert_array_almost_equal(original_KE, torch_KE)
         np.testing.assert_array_almost_equal(original_PE, torch_PE, decimal=d)
-
+        
     def test_dask_implementation(self):
-        np.random.seed(42)
-        N = 100
-        pos = np.random.randn(N, 3).astype(np.float32)
-        vel = np.random.randn(N, 3).astype(np.float32)
         original_pos, original_vel, original_KE, original_PE = original_main(
-            **{
-                **self.get_sim_params(),
-                "dt": 1.0,
-                # "N": N,
-                # "pos": pos.copy(),
-                # "vel": vel.copy(),
-            }
+            **self.get_sim_params(),
         )
         dask_pos, dask_vel, dask_KE, dask_PE = dask_main(
-            **{
-                **self.get_sim_params(),
-                # "N": N,
-                # "pos": da.from_array(pos.copy()),
-                # "vel": da.from_array(vel.copy()),
-            }
+            **self.get_sim_params(),
         )
-        d = 3
+        d = 6
         np.testing.assert_array_almost_equal(original_pos, dask_pos, decimal=d)
         np.testing.assert_array_almost_equal(original_vel, dask_vel, decimal=d)
         np.testing.assert_array_almost_equal(original_KE[-1], dask_KE, decimal=d)
-        np.testing.assert_array_almost_equal(original_PE[-1], dask_PE, decimal=1)
+        np.testing.assert_array_almost_equal(original_PE[-1], dask_PE, decimal=2)
+
 
 if __name__ == "__main__":
     unittest.main()
