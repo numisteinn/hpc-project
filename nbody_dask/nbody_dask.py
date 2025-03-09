@@ -6,8 +6,6 @@ Simulate orbits of stars interacting due to gravity
 Code calculates pairwise forces according to Newton's Law of Gravity
 """
 
-import time
-
 import numpy as np
 import dask.array as da
 
@@ -97,7 +95,6 @@ def main(
 
     KE, PE = get_energy_dask(pos, vel, mass, G)
     out = pos.compute(), vel.compute(), KE.compute(), PE.compute()
-
     return out
 
 

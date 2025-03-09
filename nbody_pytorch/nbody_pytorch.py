@@ -155,11 +155,11 @@ def main(
             KE_save.cpu().numpy(),
             PE_save.cpu().numpy(),
         )
-    output_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        f"nbody_pytorch_{N}_{t_end}_{dt}_{softening}_{G}.png",
-    )
-    plot_finalize(output_path)
+        output_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            f"nbody_pytorch_{N}_{t_end}_{dt}_{softening}_{G}.png",
+        )
+        plot_finalize(output_path)
 
     return pos, vel, KE_save, PE_save
 
