@@ -6,7 +6,6 @@ import sys
 # Add the directory containing cythonnf module to the Python path (wants absolute paths)
 sys.path.append(os.path.dirname(__file__))
 import cythonfn
-import time
 
 from plot import prep_figure, plot_state, plot_finalize
 
@@ -26,8 +25,8 @@ def main(
     dt=0.01,
     softening=0.1,
     G=1.0,
+    save_plot=True,
     plot_real_time=False,
-    measure_time=False,
     pos=None,
     vel=None,
 ):
@@ -63,9 +62,9 @@ def main(
     PE_save[0] = PE
     t_all = np.arange(Nt + 1) * dt
 
-    prep_figure()
+    if save_plot:
+        prep_figure()
 
-    start_time = time.time()
     # Simulation Main Loop
     for i in range(1, Nt + 1):
         # (1/2) kick
@@ -95,14 +94,11 @@ def main(
         if plot_real_time:
             plot_state(i, t_all, pos_save, KE_save, PE_save)
 
-    end_time = time.time()
-    if measure_time:
-        print(f"Execution time: {end_time - start_time} seconds")
-
-    plot_state(i, t_all, pos_save, KE_save, PE_save)
-    plot_finalize(
-        f"{os.path.dirname(os.path.abspath(__file__))}/nbody_original_{N}_{t_end}_{dt}_{softening}_{G}.png"
-    )
+    if save_plot:
+        plot_state(i, t_all, pos_save, KE_save, PE_save)
+        plot_finalize(
+            f"{os.path.dirname(os.path.abspath(__file__))}/nbody_original_{N}_{t_end}_{dt}_{softening}_{G}.png"
+        )
 
     return pos, vel, KE_save, PE_save
 

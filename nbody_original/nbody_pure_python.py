@@ -1,8 +1,7 @@
-import time
 import random
 import math
+import os
 
-import numpy as np
 from matplotlib import pyplot as plt
 
 
@@ -37,6 +36,14 @@ def plot_state(step, t_all, pos_save, KE_save, PE_save):
     ax2.set_aspect(0.007)
 
     plt.pause(0.001)
+
+
+def plot_finalize(path):
+    plt.sca(ax2)
+    plt.xlabel("time")
+    plt.ylabel("energy")
+    ax2.legend(loc="upper right")
+    plt.savefig(path, dpi=240)
 
 
 def get_acc(pos, mass, G, softening):
@@ -90,8 +97,8 @@ def main(
     dt=0.01,
     softening=0.1,
     G=1.0,
+    save_plot=True,
     plot_real_time=False,
-    measure_time=False,
     pos=None,
     vel=None,
 ):
@@ -126,14 +133,13 @@ def main(
     Nt = int(math.ceil(t_end / dt))
     pos_save = [[[0.0] * 3 for _ in range(N)] for _ in range(Nt + 1)]
     KE_save, PE_save = [0.0] * (Nt + 1), [0.0] * (Nt + 1)
-    t_all = np.arange(Nt + 1) * dt
+    t_all = list(range(0, (Nt + 1) * dt, dt))
 
-    prep_figure()
+    if save_plot:
+        prep_figure()
 
     KE, PE = get_energy(pos, vel, mass, G)
     pos_save[0], KE_save[0], PE_save[0] = pos[:], KE, PE
-
-    start_time = time.time()
 
     for i in range(1, Nt + 1):
         # Velocity Verlet integration
@@ -152,14 +158,11 @@ def main(
         if plot_real_time:
             plot_state(i, t_all, pos_save, KE_save, PE_save)
 
-    end_time = time.time()
-    if measure_time:
-        print(f"Execution time: {end_time - start_time:.3f} seconds")
-
-    plot_state(i, t_all, pos_save, KE_save, PE_save)
-    # plot_finalize(
-    #     f"{os.path.dirname(os.path.abspath(__file__))}/nbody_original_{N}_{t_end}_{dt}_{softening}_{G}.png"
-    # )
+    if save_plot:
+        plot_state(i, t_all, pos_save, KE_save, PE_save)
+        plot_finalize(
+            f"{os.path.dirname(os.path.abspath(__file__))}/nbody_purepython_{N}_{t_end}_{dt}_{softening}_{G}.png"
+        )
     return pos, vel, KE_save, PE_save
 
 

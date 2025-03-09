@@ -1,5 +1,4 @@
 import torch
-import time
 import os
 
 from plot import prep_figure, plot_state, plot_finalize
@@ -76,8 +75,8 @@ def main(
     dt=0.01,
     softening=0.1,
     G=1.0,
+    save_plot=True,
     plot_real_time=False,
-    measure_time=False,
     pos_init=None,
     vel_init=None,
 ):
@@ -118,9 +117,9 @@ def main(
     PE_save[0] = PE
     t_all = torch.linspace(0, Nt * dt, Nt + 1, device=device)
 
-    prep_figure()
+    if save_plot:
+        prep_figure()
 
-    start_time = time.time()
     # Main simulation loop.
     for i in range(1, Nt + 1):
         # First half kick
@@ -148,17 +147,14 @@ def main(
                 PE_save.cpu().numpy(),
             )
 
-    end_time = time.time()
-    if measure_time:
-        print(f"Execution time: {end_time - start_time} seconds")
-
-    plot_state(
-        i,
-        t_all.cpu().numpy(),
-        pos_save.cpu().numpy(),
-        KE_save.cpu().numpy(),
-        PE_save.cpu().numpy(),
-    )
+    if save_plot:
+        plot_state(
+            i,
+            t_all.cpu().numpy(),
+            pos_save.cpu().numpy(),
+            KE_save.cpu().numpy(),
+            PE_save.cpu().numpy(),
+        )
     output_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         f"nbody_pytorch_{N}_{t_end}_{dt}_{softening}_{G}.png",

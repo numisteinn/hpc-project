@@ -73,8 +73,8 @@ def main(
     dt=0.01,
     softening=0.1,
     G=1.0,
+    save_plot=True,
     plot_real_time=False,
-    measure_time=False,
     pos=None,
     vel=None,
 ):
@@ -89,25 +89,14 @@ def main(
     vel -= da.mean(mass * vel, axis=0) / da.mean(mass)
     acc = get_acc_dask(pos, mass, G, softening)
     Nt = int(np.ceil(t_end / dt))
-    start_time = time.time()
-    p_time = time.time()
     for i in range(1, Nt + 1):
         vel += acc * dt / 2.0
         pos += vel * dt
         acc = get_acc_dask(pos, mass, G, softening)
         vel += acc * dt / 2
-        if i % 50 == 0:
-            print(f"Logging... {i}/{Nt}")
-            print(f"Time since last log: {time.time() - p_time}")
-            p_time = time.time()
 
     KE, PE = get_energy_dask(pos, vel, mass, G)
-    print("Computing...")
     out = pos.compute(), vel.compute(), KE.compute(), PE.compute()
-    if measure_time:
-        print(
-            f"Execution time: {time.time() - start_time} seconds for {Nt} steps and {N} particles"
-        )
 
     return out
 

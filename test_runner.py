@@ -16,28 +16,37 @@ from nbody_dask.nbody_dask import main as dask_main
 class TestNBodySimulation(unittest.TestCase):
     def get_sim_params(self):
         return {
-            "N": 100,
+            "N": 1000,
             "t": 0,
             "t_end": 1.0,
-            "dt": 0.01,
+            "dt": 0.1,
             "softening": 0.1,
             "G": 1.0,
             "plot_real_time": False,
         }
 
     def test_cython_implementation(self):
-        original_pos, original_vel, original_KE, original_PE = original_main(**self.get_sim_params())
-        cython_pos, cython_vel, cython_KE, cython_PE = cython_main(**self.get_sim_params())
+        original_pos, original_vel, original_KE, original_PE = original_main(
+            **self.get_sim_params()
+        )
+        cython_pos, cython_vel, cython_KE, cython_PE = cython_main(
+            **self.get_sim_params()
+        )
         np.testing.assert_array_almost_equal(original_pos, cython_pos)
         np.testing.assert_array_almost_equal(original_vel, cython_vel)
         np.testing.assert_array_almost_equal(original_KE, cython_KE)
         np.testing.assert_array_almost_equal(original_PE, cython_PE)
 
     def test_pure_implementations(self):
-        N = 100
         random.seed(42)
-        pos = [[random.gauss(0, 1) for _ in range(3)] for _ in range(N)]
-        vel = [[random.gauss(0, 1) for _ in range(3)] for _ in range(N)]
+        pos = [
+            [random.gauss(0, 1) for _ in range(3)]
+            for _ in range(self.get_sim_params()["N"])
+        ]
+        vel = [
+            [random.gauss(0, 1) for _ in range(3)]
+            for _ in range(self.get_sim_params()["N"])
+        ]
         original_pos, original_vel, original_KE, original_PE = original_main(
             **{
                 **self.get_sim_params(),
@@ -59,9 +68,14 @@ class TestNBodySimulation(unittest.TestCase):
 
     def test_pytorch_implmentation(self):
         np.random.seed(42)
-        N = 100
-        pos = np.random.randn(N, 3).astype(np.float32)
-        vel = np.random.randn(N, 3).astype(np.float32)
+        pos = [
+            [random.gauss(0, 1) for _ in range(3)]
+            for _ in range(self.get_sim_params()["N"])
+        ]
+        vel = [
+            [random.gauss(0, 1) for _ in range(3)]
+            for _ in range(self.get_sim_params()["N"])
+        ]
         original_pos, original_vel, original_KE, original_PE = original_main(
             **{
                 **self.get_sim_params(),
@@ -81,7 +95,7 @@ class TestNBodySimulation(unittest.TestCase):
         np.testing.assert_array_almost_equal(original_vel, torch_vel, decimal=d)
         np.testing.assert_array_almost_equal(original_KE, torch_KE)
         np.testing.assert_array_almost_equal(original_PE, torch_PE, decimal=d)
-        
+
     def test_dask_implementation(self):
         original_pos, original_vel, original_KE, original_PE = original_main(
             **self.get_sim_params(),
