@@ -2,7 +2,6 @@ import os
 import time
 import sys
 import gc
-import psutil
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -12,16 +11,17 @@ import torch
 
 # Import implementations
 from nbody_original.nbody_original import main as original_main
+
 from nbody_cython.nbody_cython import main as cython_main
 from nbody_original.nbody_pure_python import main as pure_main
 from nbody_pytorch.nbody_pytorch import main as torch_main
 from nbody_dask.nbody_dask import main as dask_main
+from memory_profiler import memory_usage
+from collections import namedtuple
 
-
-def get_memory_usage():
-    """Get current memory usage in MB"""
-    process = psutil.Process(os.getpid())
-    return process.memory_info().rss / (1024 * 1024)
+Metrics = namedtuple(
+    "Metrics", ["implementation", "N", "execution_time", "memory_usage"]
+)
 
 
 def run_benchmark(
@@ -38,6 +38,7 @@ def run_benchmark(
     dask_vel=None,
     torch_pos=None,
     torch_vel=None,
+    measurement="time",
 ):
     """Run a single benchmark and return metrics"""
     # Force garbage collection before each run
@@ -66,31 +67,46 @@ def run_benchmark(
         params["pos"] = pos
         params["vel"] = vel
 
-    # Measure memory before
-    mem_before = get_memory_usage()
+    # Initialize metrics
+    metrics = Metrics(implementation=name, N=N, execution_time=None, memory_usage=None)
 
-    # Run and time the implementation
-    start_time = time.time()
-    implementation(**params)
-    end_time = time.time()
+    # Measure time before if required
+    if measurement == "time":
+        # Run the implementation
+        start_time = time.time()
+        # Measure time after if required
+        implementation(**params)
+        end_time = time.time()
+        metrics = metrics._replace(execution_time=end_time - start_time)
+        print(f"Execution time measured: {metrics.execution_time} seconds.")
+    else:
+        # Measure memory after if required
+        print("Measuring memory usage...")
+        # List of memory usage values
+        multiprocess = False
+        timeout = 2 * 60  # 2 minutesk
+        m = memory_usage(
+            (implementation, (), params),
+            interval=0.1,
+            timeout=timeout,
+            multiprocess=multiprocess,
+        )
+        metrics = metrics._replace(memory_usage=m)
+        print(f"Memory usage measured: {metrics.memory_usage} MB.")
 
-    # Measure memory after
-    mem_after = get_memory_usage()
-
-    return {
-        "implementation": name,
-        "N": N,
-        "execution_time": end_time - start_time,
-        "memory_usage": mem_after - mem_before,
-    }
+    print(f"Benchmark completed for {name} with N={N}.")
+    return metrics
 
 
 def benchmark_all_implementations(
-    N_values, runs_per_N=3, variations=["pure", "original", "cython", "pytorch", "dask"]
+    N_values,
+    runs_per_N=3,
+    variations=None,
+    measurement="time",  # or "memory"
 ):
     """Benchmark all implementations for different N values"""
     results = []
-
+    variations = variations or ["pure", "original", "cython", "pytorch", "dask"]
     for N in N_values:
         print(f"Benchmarking with N={N}")
 
@@ -120,7 +136,12 @@ def benchmark_all_implementations(
                     print("Running pure Python implementation")
                     results.append(
                         run_benchmark(
-                            pure_main, "pure", N, pos=pos_np.copy(), vel=vel_np.copy()
+                            pure_main,
+                            "pure",
+                            N,
+                            pos=pos_np.copy(),
+                            vel=vel_np.copy(),
+                            measurement=measurement,
                         )
                     )
                 except Exception as e:
@@ -136,6 +157,7 @@ def benchmark_all_implementations(
                             N,
                             pos=pos_np.copy(),
                             vel=vel_np.copy(),
+                            measurement=measurement,
                         )
                     )
                 except Exception as e:
@@ -151,6 +173,7 @@ def benchmark_all_implementations(
                             N,
                             pos=pos_np.copy().astype(np.float64),
                             vel=vel_np.copy().astype(np.float64),
+                            measurement=measurement,
                         )
                     )
                 except Exception as e:
@@ -166,6 +189,7 @@ def benchmark_all_implementations(
                             N,
                             torch_pos=torch_pos.clone(),
                             torch_vel=torch_vel.clone(),
+                            measurement=measurement,
                         )
                     )
                 except Exception as e:
@@ -181,6 +205,7 @@ def benchmark_all_implementations(
                             N,
                             pos=dask_pos.copy(),
                             vel=dask_vel.copy(),
+                            measurement=measurement,
                         )
                     )
                 except Exception as e:
@@ -197,36 +222,49 @@ def plot_results(df, speedup_df, output_dir="benchmark_results"):
     sns.set(style="whitegrid")
 
     # Execution time by N and implementation
-    plt.figure(figsize=(12, 8))
-    sns.lineplot(data=df, x="N", y="execution_time", hue="implementation", marker="o")
-    plt.title("Execution Time by Number of Particles")
-    plt.xlabel("Number of Particles (N)")
-    plt.ylabel("Execution Time (seconds)")
-    plt.yscale("log")
-    plt.grid(True)
-    plt.savefig(os.path.join(output_dir, "execution_time.png"), dpi=300)
-    plt.close()  # Close the figure to prevent overlapping plots
+    # Ignore if execution_time is not in df
+    if "execution_time" in df.columns:
+        plt.figure(figsize=(12, 8))
+        sns.lineplot(
+            data=df, x="N", y="execution_time", hue="implementation", marker="o"
+        )
+        plt.title("Execution Time by Number of Particles")
+        plt.xlabel("Number of Particles (N)")
+        plt.ylabel("Execution Time (seconds)")
+        plt.yscale("log")
+        plt.grid(True)
+        plt.savefig(os.path.join(output_dir, "execution_time.png"), dpi=300)
+        plt.close()  # Close the figure to prevent overlapping plots
 
-    # Memory usage by N and implementation
-    plt.figure(figsize=(12, 8))
-    sns.lineplot(data=df, x="N", y="memory_usage", hue="implementation", marker="o")
-    plt.title("Memory Usage by Number of Particles")
-    plt.xlabel("Number of Particles (N)")
-    plt.ylabel("Memory Usage (MB)")
-    plt.grid(True)
-    plt.savefig(os.path.join(output_dir, "memory_usage.png"), dpi=300)
-    plt.close()  # Close the figure to prevent overlapping plots
+    if "memory_usage" in df.columns:
+        # Memory usage by N and implementation
+        plt.figure(figsize=(12, 8))
 
-    # Speedup relative to original implementation
-    plt.figure(figsize=(12, 8))
-    sns.lineplot(data=speedup_df, x="N", y="speedup", hue="implementation", marker="o")
-    plt.axhline(y=1, color="r", linestyle="--")
-    plt.title("Speedup Relative to Original Implementation")
-    plt.xlabel("Number of Particles (N)")
-    plt.ylabel("Speedup Factor (higher is better)")
-    plt.grid(True)
-    plt.savefig(os.path.join(output_dir, "speedup.png"), dpi=300)
-    plt.close()  # Close the figure to prevent overlapping plots
+        # If memory_usage is vector of lists, convert to mean
+        if isinstance(df["memory_usage"].values[0], list):
+            df["memory_usage"] = df["memory_usage"].apply(np.mean)
+
+        sns.lineplot(data=df, x="N", y="memory_usage", hue="implementation", marker="o")
+        plt.title("Memory Usage by Number of Particles")
+        plt.xlabel("Number of Particles (N)")
+        plt.ylabel("Memory Usage (MB)")
+        plt.grid(True)
+        plt.savefig(os.path.join(output_dir, "memory_usage.png"), dpi=300)
+        plt.close()  # Close the figure to prevent overlapping plots
+
+    if speedup_df is not None:
+        # Speedup relative to original implementation
+        plt.figure(figsize=(12, 8))
+        sns.lineplot(
+            data=speedup_df, x="N", y="speedup", hue="implementation", marker="o"
+        )
+        plt.axhline(y=1, color="r", linestyle="--")
+        plt.title("Speedup Relative to Original Implementation")
+        plt.xlabel("Number of Particles (N)")
+        plt.ylabel("Speedup Factor (higher is better)")
+        plt.grid(True)
+        plt.savefig(os.path.join(output_dir, "speedup.png"), dpi=300)
+        plt.close()  # Close the figure to prevent overlapping plots
 
 
 def get_speedup(df):
@@ -278,7 +316,7 @@ def main():
     if is_quick:
         print("Running quick benchmark with fewer N values")
         N_values = [10, 100, 500]
-        runs_per_N = 1
+        runs_per_N = 3
     else:
         print("Running full benchmark with all N values")
         # Define N values to test
@@ -286,17 +324,28 @@ def main():
         runs_per_N = 3
 
     # Run benchmarks
-    # variations = ["dask", "original"]
+    variations = None
     print("Saving results to CSV")
-    results = benchmark_all_implementations(N_values, runs_per_N)
-    results.to_csv(os.path.join(output_dir, "benchmark_results.csv"), index=False)
-    speedup_df = get_speedup(results)
-    # Save raw data
-    speedup_df.to_csv(os.path.join(output_dir, "speedup_results.csv"), index=False)
+    measurement = "memory"
+    results = benchmark_all_implementations(
+        N_values, runs_per_N, variations=variations, measurement=measurement
+    )
+    suffix = "_quick" if is_quick else ""
+    results.to_csv(
+        os.path.join(output_dir, f"benchmark_results{suffix}.csv"), index=False
+    )
+    speedup_df = None
+    if measurement == "time":
+        speedup_df = get_speedup(results)
+        # Save raw data
+        speedup_df.to_csv(
+            os.path.join(output_dir, f"speedup_results{suffix}.csv"), index=False
+        )
+
+        print_summary(results)
+
     # Plot results
     plot_results(results, speedup_df, output_dir=output_dir)
-
-    print_summary(results)
 
 
 if __name__ == "__main__":
