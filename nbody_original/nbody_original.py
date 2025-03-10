@@ -152,8 +152,8 @@ def main(
         KE_save[i] = KE
         PE_save[i] = PE
 
-        if i % 50 == 0:
-            print(f"Logging... {i}/{Nt}")
+        # if i % 50 == 0:
+            # print(f"Logging... {i}/{Nt}")
 
 
         # plot in real time

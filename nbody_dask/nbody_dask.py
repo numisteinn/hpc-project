@@ -96,10 +96,10 @@ def main(
         pos += vel * dt
         acc = get_acc_dask(pos, mass, G, softening)
         vel += acc * dt / 2
-        if i % 50 == 0:
-            print(f"Logging... {i}/{Nt}")
-            print(f"Time since last log: {time.time() - p_time}")
-            p_time = time.time()
+        # if i % 50 == 0:
+        #     print(f"Logging... {i}/{Nt}")
+        #     print(f"Time since last log: {time.time() - p_time}")
+        #     p_time = time.time()
 
     KE, PE = get_energy_dask(pos, vel, mass, G)
     print("Computing...")

@@ -99,10 +99,10 @@ def main(
     if measure_time:
         print(f"Execution time: {end_time - start_time} seconds")
 
-    plot_state(i, t_all, pos_save, KE_save, PE_save)
-    plot_finalize(
-        f"{os.path.dirname(os.path.abspath(__file__))}/nbody_original_{N}_{t_end}_{dt}_{softening}_{G}.png"
-    )
+    # plot_state(i, t_all, pos_save, KE_save, PE_save)
+    # plot_finalize(
+    #     f"{os.path.dirname(os.path.abspath(__file__))}/nbody_original_{N}_{t_end}_{dt}_{softening}_{G}.png"
+    # )
 
     return pos, vel, KE_save, PE_save
 

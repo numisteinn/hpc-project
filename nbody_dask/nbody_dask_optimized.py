@@ -148,10 +148,10 @@ def main(
         PE_save = PE_save.at[i].set(PE)
         
         # Log progress
-        if i % 10 == 0:
-            print(f"Logging... {i}/{Nt}")
-            print(f"Time since last log: {time.time() - p_time}")
-            p_time = time.time()
+        # if i % 10 == 0:
+        #     print(f"Logging... {i}/{Nt}")
+        #     print(f"Time since last log: {time.time() - p_time}")
+        #     p_time = time.time()
     
     # Prepare output path
     output_path = os.path.join(

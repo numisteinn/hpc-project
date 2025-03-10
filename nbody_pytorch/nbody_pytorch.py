@@ -82,10 +82,11 @@ def main(
     vel_init=None,
 ):
     # Set device (GPU if available)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("mps")
     # device = "cpu"
 
-    print(device)
+    # print(device)
 
     # Initialize masses as a [N,1] tensor on device.
     mass = (20.0 * torch.ones((N, 1), device=device)) / N
@@ -151,19 +152,19 @@ def main(
     end_time = time.time()
     if measure_time:
         print(f"Execution time: {end_time - start_time} seconds")
-
-    plot_state(
-        i,
-        t_all.cpu().numpy(),
-        pos_save.cpu().numpy(),
-        KE_save.cpu().numpy(),
-        PE_save.cpu().numpy(),
-    )
-    output_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        f"nbody_pytorch_{N}_{t_end}_{dt}_{softening}_{G}.png",
-    )
-    plot_finalize(output_path)
+    #
+    # plot_state(
+    #     i,
+    #     t_all.cpu().numpy(),
+    #     pos_save.cpu().numpy(),
+    #     KE_save.cpu().numpy(),
+    #     PE_save.cpu().numpy(),
+    # )
+    # output_path = os.path.join(
+    #     os.path.dirname(os.path.abspath(__file__)),
+    #     f"nbody_pytorch_{N}_{t_end}_{dt}_{softening}_{G}.png",
+    # )
+    # plot_finalize(output_path)
 
     return pos, vel, KE_save, PE_save
 
