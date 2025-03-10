@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(__file__))
 import cythonfn
 import time
 
-from plot import prep_figure, plot_state, plot_finalize
+from plot import prep_figure
 
 """
 Create Your Own N-body Simulation (With Python)
@@ -92,8 +92,8 @@ def main(
         PE_save[i] = PE
 
         # plot in real time
-        if plot_real_time:
-            plot_state(i, t_all, pos_save, KE_save, PE_save)
+        # if plot_real_time:
+        #     plot_state(i, t_all, pos_save, KE_save, PE_save)
 
     end_time = time.time()
     if measure_time:

@@ -149,14 +149,14 @@ def main(
         KE, PE = get_energy(pos, vel, mass, G)
         pos_save[i], KE_save[i], PE_save[i] = pos[:], KE, PE
         # plot in real time
-        if plot_real_time:
-            plot_state(i, t_all, pos_save, KE_save, PE_save)
+        # if plot_real_time:
+        #     plot_state(i, t_all, pos_save, KE_save, PE_save)
 
     end_time = time.time()
     if measure_time:
         print(f"Execution time: {end_time - start_time:.3f} seconds")
 
-    plot_state(i, t_all, pos_save, KE_save, PE_save)
+    # plot_state(i, t_all, pos_save, KE_save, PE_save)
     # plot_finalize(
     #     f"{os.path.dirname(os.path.abspath(__file__))}/nbody_original_{N}_{t_end}_{dt}_{softening}_{G}.png"
     # )

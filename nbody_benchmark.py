@@ -85,7 +85,9 @@ def run_benchmark(
     }
 
 
-def benchmark_all_implementations(N_values, runs_per_N=3):
+def benchmark_all_implementations(
+    N_values, runs_per_N=3, variations=["pure", "original", "cython", "pytorch", "dask"]
+):
     """Benchmark all implementations for different N values"""
     results = []
 
@@ -98,8 +100,8 @@ def benchmark_all_implementations(N_values, runs_per_N=3):
         vel_np = np.random.randn(N, 3).astype(np.float32)
 
         # Create Dask arrays
-        dask_pos = da.from_array(pos_np.copy())
-        dask_vel = da.from_array(vel_np.copy())
+        dask_pos = da.from_array(pos_np.copy(), chunks=(N // 4, 3))
+        dask_vel = da.from_array(vel_np.copy(), chunks=(N // 4, 3))
 
         # Create PyTorch tensors
         # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -111,7 +113,9 @@ def benchmark_all_implementations(N_values, runs_per_N=3):
             print(f"Run {run + 1}/{runs_per_N}")
 
             # Skip pure Python for large N to avoid excessive runtime
-            if N <= 500 or run == 0:  # Only run pure Python once for large N
+            if "python" in variations and (
+                N <= 500 or run == 0
+            ):  # Only run pure Python once for large N
                 try:
                     print("Running pure Python implementation")
                     results.append(
@@ -122,61 +126,65 @@ def benchmark_all_implementations(N_values, runs_per_N=3):
                 except Exception as e:
                     print(f"Error in pure Python implementation: {e}")
 
-            try:
-                print("Running original NumPy implementation")
-                results.append(
-                    run_benchmark(
-                        original_main,
-                        "original",
-                        N,
-                        pos=pos_np.copy(),
-                        vel=vel_np.copy(),
+            if "original" in variations:
+                try:
+                    print("Running original NumPy implementation")
+                    results.append(
+                        run_benchmark(
+                            original_main,
+                            "original",
+                            N,
+                            pos=pos_np.copy(),
+                            vel=vel_np.copy(),
+                        )
                     )
-                )
-            except Exception as e:
-                print(f"Error in original implementation: {e}")
+                except Exception as e:
+                    print(f"Error in original implementation: {e}")
 
-            try:
-                print("Running Cython implementation")
-                results.append(
-                    run_benchmark(
-                        cython_main,
-                        "cython",
-                        N,
-                        pos=pos_np.copy().astype(np.float64),
-                        vel=vel_np.copy().astype(np.float64),
+            if "cython" in variations:
+                try:
+                    print("Running Cython implementation")
+                    results.append(
+                        run_benchmark(
+                            cython_main,
+                            "cython",
+                            N,
+                            pos=pos_np.copy().astype(np.float64),
+                            vel=vel_np.copy().astype(np.float64),
+                        )
                     )
-                )
-            except Exception as e:
-                print(f"Error in Cython implementation: {e}")
+                except Exception as e:
+                    print(f"Error in Cython implementation: {e}")
 
-            try:
-                print("Running PyTorch implementation")
-                results.append(
-                    run_benchmark(
-                        torch_main,
-                        "pytorch",
-                        N,
-                        torch_pos=torch_pos.clone(),
-                        torch_vel=torch_vel.clone(),
+            if "pytorch" in variations:
+                try:
+                    print("Running PyTorch implementation")
+                    results.append(
+                        run_benchmark(
+                            torch_main,
+                            "pytorch",
+                            N,
+                            torch_pos=torch_pos.clone(),
+                            torch_vel=torch_vel.clone(),
+                        )
                     )
-                )
-            except Exception as e:
-                print(f"Error in PyTorch implementation: {e}")
+                except Exception as e:
+                    print(f"Error in PyTorch implementation: {e}")
 
-            try:
-                print("Running Dask implementation")
-                results.append(
-                    run_benchmark(
-                        dask_main,
-                        "dask",
-                        N,
-                        dask_pos=dask_pos.copy(),
-                        dask_vel=dask_vel.copy(),
+            if "dask" in variations:
+                try:
+                    print("Running Dask implementation")
+                    results.append(
+                        run_benchmark(
+                            dask_main,
+                            "dask",
+                            N,
+                            pos=dask_pos.copy(),
+                            vel=dask_vel.copy(),
+                        )
                     )
-                )
-            except Exception as e:
-                print(f"Error in Dask implementation: {e}")
+                except Exception as e:
+                    print(f"Error in Dask implementation: {e}")
 
     return pd.DataFrame(results)
 
@@ -246,35 +254,49 @@ def get_speedup(df):
     return pd.DataFrame(speedups)
 
 
-def main():
-    # Define N values to test
-    N_values = [10, 50, 100, 500, 1000, 2000]
-
-    # For quick testing, use a smaller set
-    if "--quick" in sys.argv:
-        print("Running quick benchmark with fewer N values")
-        N_values = [10, 100, 500]
-        runs_per_N = 1
-    else:
-        print("Running full benchmark with all N values")
-        runs_per_N = 3
-
-    # Run benchmarks
-    results = benchmark_all_implementations(N_values, runs_per_N)
-    speedup_df = get_speedup(results)
-    output_dir = "benchmark_results"
-    results.to_csv(os.path.join(output_dir, "benchmark_results.csv"), index=False)
-    # Save raw data
-    speedup_df.to_csv(os.path.join(output_dir, "speedup_results.csv"), index=False)
-    # Plot results
-    plot_results(results, speedup_df, output_dir=output_dir)
-
+def print_summary(results):
     # Print summary
     print("\nBenchmark Summary:")
     summary = (
         results.groupby(["implementation", "N"])["execution_time"].mean().reset_index()
     )
     print(summary)
+
+
+def main():
+    output_dir = "benchmark_results"
+    if "--from_csv" in sys.argv:
+        print("Plotting results from existing CSV file")
+        results = pd.read_csv("benchmark_results/benchmark_results.csv")
+        speedup_df = get_speedup(results)
+        plot_results(results, speedup_df, output_dir=output_dir)
+        print_summary(results)
+        return
+
+    # For quick testing, use a smaller set
+    is_quick = "--quick" in sys.argv
+    if is_quick:
+        print("Running quick benchmark with fewer N values")
+        N_values = [10, 100, 500]
+        runs_per_N = 1
+    else:
+        print("Running full benchmark with all N values")
+        # Define N values to test
+        N_values = [10, 50, 100, 500, 1000, 2000]
+        runs_per_N = 3
+
+    # Run benchmarks
+    # variations = ["dask", "original"]
+    print("Saving results to CSV")
+    results = benchmark_all_implementations(N_values, runs_per_N)
+    results.to_csv(os.path.join(output_dir, "benchmark_results.csv"), index=False)
+    speedup_df = get_speedup(results)
+    # Save raw data
+    speedup_df.to_csv(os.path.join(output_dir, "speedup_results.csv"), index=False)
+    # Plot results
+    plot_results(results, speedup_df, output_dir=output_dir)
+
+    print_summary(results)
 
 
 if __name__ == "__main__":

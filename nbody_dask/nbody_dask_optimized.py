@@ -172,7 +172,7 @@ def main(
         print(f"Execution time: {time.time() - start_time} seconds")
     
     # Plot final state
-    plot_state(i, t_all, pos_save_result, KE_result, PE_result)
+    # plot_state(i, t_all, pos_save_result, KE_result, PE_result)
     plot_finalize(output_path)
     
     return pos_result, vel_result, KE_result, PE_result

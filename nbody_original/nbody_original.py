@@ -157,8 +157,8 @@ def main(
 
 
         # plot in real time
-        if plot_real_time:
-            plot_state(i, t_all, pos_save, KE_save, PE_save)
+        # if plot_real_time:
+        #     plot_state(i, t_all, pos_save, KE_save, PE_save)
 
     if measure_time:
         print(
