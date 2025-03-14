@@ -55,7 +55,3 @@ Run the simulation with the pure Python implementation:
 This project uses `uv` package manager. To run using `uv`:  
 ```uv run python runner.py -mode original -N 100 -t 0 -t_end 10.0 -dt 0.01 -softening 0.1 -G 1.0 ```
 
-
-# Optimization methods that are applicable
-- cuda
-- cython
