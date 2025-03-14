@@ -1,4 +1,5 @@
 import os
+import random
 import time
 import sys
 import gc
@@ -44,6 +45,7 @@ def run_benchmark(
     # Force garbage collection before each run
     gc.collect()
 
+    dt = 0.5 if measurement == "memory" else dt
     # Set up parameters
     params = {
         "N": N,
@@ -112,8 +114,10 @@ def benchmark_all_implementations(
 
         # Generate consistent initial conditions for all implementations
         np.random.seed(42)
-        pos_np = np.random.randn(N, 3).astype(np.float32)
-        vel_np = np.random.randn(N, 3).astype(np.float32)
+        pos = [[random.gauss(0, 1) for _ in range(3)] for _ in range(N)]
+        vel = [[random.gauss(0, 1) for _ in range(3)] for _ in range(N)]
+        pos_np = np.asarray(pos).astype(np.float32)
+        vel_np = np.asarray(vel).astype(np.float32)
 
         # Create Dask arrays
         dask_pos = da.from_array(pos_np.copy(), chunks=(N // 4, 3))
@@ -129,7 +133,7 @@ def benchmark_all_implementations(
             print(f"Run {run + 1}/{runs_per_N}")
 
             # Skip pure Python for large N to avoid excessive runtime
-            if "python" in variations and (
+            if "pure" in variations and (
                 N <= 500 or run == 0
             ):  # Only run pure Python once for large N
                 try:
@@ -139,8 +143,8 @@ def benchmark_all_implementations(
                             pure_main,
                             "pure",
                             N,
-                            pos=pos_np.copy(),
-                            vel=vel_np.copy(),
+                            pos=pos,
+                            vel=vel,
                             measurement=measurement,
                         )
                     )
@@ -326,7 +330,8 @@ def main():
     # Run benchmarks
     variations = None
     print("Saving results to CSV")
-    measurement = "memory"
+
+    measurement = "memory" if "--memory" in sys.argv else "time"
     results = benchmark_all_implementations(
         N_values, runs_per_N, variations=variations, measurement=measurement
     )
