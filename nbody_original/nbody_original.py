@@ -152,13 +152,13 @@ def main(
         KE_save[i] = KE
         PE_save[i] = PE
 
-        if i % 50 == 0:
-            print(f"Logging... {i}/{Nt}")
+        # if i % 50 == 0:
+            # print(f"Logging... {i}/{Nt}")
 
 
         # plot in real time
-        if plot_real_time:
-            plot_state(i, t_all, pos_save, KE_save, PE_save)
+        # if plot_real_time:
+        #     plot_state(i, t_all, pos_save, KE_save, PE_save)
 
     if measure_time:
         print(

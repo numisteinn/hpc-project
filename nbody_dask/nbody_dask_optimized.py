@@ -148,10 +148,10 @@ def main(
         PE_save = PE_save.at[i].set(PE)
         
         # Log progress
-        if i % 10 == 0:
-            print(f"Logging... {i}/{Nt}")
-            print(f"Time since last log: {time.time() - p_time}")
-            p_time = time.time()
+        # if i % 10 == 0:
+        #     print(f"Logging... {i}/{Nt}")
+        #     print(f"Time since last log: {time.time() - p_time}")
+        #     p_time = time.time()
     
     # Prepare output path
     output_path = os.path.join(
@@ -172,7 +172,7 @@ def main(
         print(f"Execution time: {time.time() - start_time} seconds")
     
     # Plot final state
-    plot_state(i, t_all, pos_save_result, KE_result, PE_result)
+    # plot_state(i, t_all, pos_save_result, KE_result, PE_result)
     plot_finalize(output_path)
     
     return pos_result, vel_result, KE_result, PE_result
