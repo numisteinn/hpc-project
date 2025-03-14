@@ -139,32 +139,32 @@ def main(
         KE_save[i] = KE
         PE_save[i] = PE
 
-        # if plot_real_time:
-        #     # For plotting, data may need to be moved to CPU.
-        #     plot_state(
-        #         i,
-        #         t_all.cpu().numpy(),
-        #         pos_save.cpu().numpy(),
-        #         KE_save.cpu().numpy(),
-        #         PE_save.cpu().numpy(),
-        #     )
+        if plot_real_time:
+            # For plotting, data may need to be moved to CPU.
+            plot_state(
+                i,
+                t_all.cpu().numpy(),
+                pos_save.cpu().numpy(),
+                KE_save.cpu().numpy(),
+                PE_save.cpu().numpy(),
+            )
 
     end_time = time.time()
     if measure_time:
         print(f"Execution time: {end_time - start_time} seconds")
-    #
-    # plot_state(
-    #     i,
-    #     t_all.cpu().numpy(),
-    #     pos_save.cpu().numpy(),
-    #     KE_save.cpu().numpy(),
-    #     PE_save.cpu().numpy(),
-    # )
-    # output_path = os.path.join(
-    #     os.path.dirname(os.path.abspath(__file__)),
-    #     f"nbody_pytorch_{N}_{t_end}_{dt}_{softening}_{G}.png",
-    # )
-    # plot_finalize(output_path)
+
+    plot_state(
+        i,
+        t_all.cpu().numpy(),
+        pos_save.cpu().numpy(),
+        KE_save.cpu().numpy(),
+        PE_save.cpu().numpy(),
+    )
+    output_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        f"nbody_pytorch_{N}_{t_end}_{dt}_{softening}_{G}.png",
+    )
+    plot_finalize(output_path)
 
     return pos, vel, KE_save, PE_save
 
